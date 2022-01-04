@@ -1,0 +1,1 @@
+# teplota_vlhkost_LCD
