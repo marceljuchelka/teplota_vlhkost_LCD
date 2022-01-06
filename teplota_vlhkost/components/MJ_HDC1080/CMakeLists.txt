@@ -1,6 +1,6 @@
 
-idf_component_register(SRCS "main.c")
-#                    INCLUDE_DIRS "."
+idf_component_register(SRCS "main.c hdc1080.c")
+                    INCLUDE_DIRS "."
 
                     
                     

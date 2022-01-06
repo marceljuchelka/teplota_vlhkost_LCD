@@ -3,7 +3,7 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := test_knihovny
+PROJECT_NAME := teplota_vlhkost
 
 include $(IDF_PATH)/make/project.mk
 
