@@ -11,8 +11,14 @@
 #include "driver/i2c.h"
 
 /* deklarace */
+#define prace  1
+#if prace == 1
+#define EXAMPLE_ESP_WIFI_SSID       "Svereo wifi"
+#define EXAMPLE_ESP_WIFI_PASS		"svereo1122"
+#else
 #define EXAMPLE_ESP_WIFI_SSID       "Hoass"
 #define EXAMPLE_ESP_WIFI_PASS		"Hoas12345"
+#endif
 #define EXAMPLE_ESP_MAXIMUM_RETRY  	10
 
 /* The event group allows multiple bits for each event, but we only care about two events:

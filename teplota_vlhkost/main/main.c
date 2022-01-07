@@ -31,9 +31,16 @@
 #include "../components/MK_LCD/mk_lcd44780.h"
 #include "../main/main.h"
 
+
+
+#if prace == 1
+	#define senzor_web_teplota	"&sensor[marcel_teplota_prace]="
+	#define senzor_web_vlhkost	"&sensor[marcel_vlhkost_prace]="
+#else
+	#define senzor_web_teplota	"&sensor[marcel_teplota_doma]="
+	#define senzor_web_vlhkost	"&sensor[marcel_vlhkost_doma]="
+#endif
 #define led_pin_mb	2
-#define senzor_web_teplota	"&sensor[marcel_teplota]="
-#define senzor_web_vlhkost	"&sensor[marcel_vlhkost]="
 
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
@@ -147,10 +154,10 @@ static void http_get_task(uint8_t velicina,float* hodnota)
 
         ESP_LOGI(TAG1, "... done reading from socket. Last read return=%d errno=%d\r\n", r, errno);
         close(s);
-        for(int countdown = 1; countdown >= 0; countdown--) {
-            ESP_LOGI(TAG1, "%d... ", countdown);
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
-        }
+//        for(int countdown = 1; countdown >= 0; countdown--) {
+//            ESP_LOGI(TAG1, "%d... ", countdown);
+//            vTaskDelay(1000 / portTICK_PERIOD_MS);
+//        }
         ESP_LOGI(TAG1, "Starting again!");
 //    }
 }
@@ -223,9 +230,9 @@ void tisk_cas(){
 
 void led_blik(uint16_t cas){
 	uint8_t uroven = 0;
+	gpio_set_level(led_pin_mb, 0);
 	vTaskDelay(cas/portTICK_PERIOD_MS);
-	uroven^= 1;
-	gpio_set_level(led_pin_mb, uroven);
+	gpio_set_level(led_pin_mb, 1);
 }
 void wifi_init_sta(void)
 {
@@ -304,10 +311,12 @@ void app_main()
 	while(1){
 		uroven^= 1;
 		tisk_vlhkost();
-		vTaskDelay(5000/portTICK_PERIOD_MS);
+		led_blik(100);
+		vTaskDelay(8000/portTICK_PERIOD_MS);
+		led_blik(100);
 		tisk_teplota();
 		gpio_set_level(led_pin_mb, uroven);
-		vTaskDelay(5000/portTICK_PERIOD_MS);
+		vTaskDelay(8000/portTICK_PERIOD_MS);
 
 
 	}
