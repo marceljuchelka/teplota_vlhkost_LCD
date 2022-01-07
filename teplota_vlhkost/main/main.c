@@ -19,6 +19,7 @@
 #include "esp_wifi.h"
 #include "nvs.h"
 #include "nvs_flash.h"
+#include "driver/adc.h"
 
 #include "lwip/err.h"
 #include "lwip/sys.h"
@@ -36,6 +37,7 @@
 #if prace == 1
 	#define senzor_web_teplota	"&sensor[marcel_teplota_prace]="
 	#define senzor_web_vlhkost	"&sensor[marcel_vlhkost_prace]="
+	#define senzor_web_vlhkost	"&sensor[marcel_jas_prace]="
 #else
 	#define senzor_web_teplota	"&sensor[marcel_teplota_doma]="
 	#define senzor_web_vlhkost	"&sensor[marcel_vlhkost_doma]="
@@ -296,7 +298,13 @@ void wifi_init_sta(void)
 
 void app_main()
 {
-	uint16_t uroven = 0;
+	uint16_t uroven = 0, adc_data = 0;
+	adc_config_t adc_conf;
+	adc_conf.mode = ADC_READ_TOUT_MODE;
+	adc_conf.clk_div = 8;
+	adc_init(&adc_conf);
+
+
 		vTaskDelay(500/portTICK_PERIOD_MS);
 	gpio_set_direction(led_pin_mb, GPIO_MODE_OUTPUT);
     ESP_ERROR_CHECK(nvs_flash_init());
@@ -312,10 +320,13 @@ void app_main()
 		uroven^= 1;
 		tisk_vlhkost();
 		led_blik(100);
+		adc_read(&adc_data);
+		printf("jas = %d",adc_data);
 		vTaskDelay(8000/portTICK_PERIOD_MS);
 		led_blik(100);
 		tisk_teplota();
-		gpio_set_level(led_pin_mb, uroven);
+		adc_read(&adc_data);
+		printf("jas = %d\n",adc_data);
 		vTaskDelay(8000/portTICK_PERIOD_MS);
 
 
