@@ -31,6 +31,9 @@
 #include "../components/MJ_HDC1080/hdc1080.h"
 #include "../components/MK_LCD/mk_lcd44780.h"
 #include "../main/main.h"
+#include "sdkconfig.h"
+
+
 
 
 
@@ -238,6 +241,12 @@ void led_blik(uint16_t cas){
 	vTaskDelay(cas/portTICK_PERIOD_MS);
 	gpio_set_level(led_pin_mb, 1);
 }
+
+void lcd_led_on(uint16_t cas){
+	lcd_LED(1);
+	vTaskDelay(cas/portTICK_PERIOD_MS);
+	lcd_LED(0);
+}
 void wifi_init_sta(void)
 {
     s_wifi_event_group = xEventGroupCreate();
@@ -320,13 +329,15 @@ void app_main()
 		lcd_cls();
 
 	while(1){
-		tisk_vlhkost();
 		led_blik(100);
+		tisk_vlhkost();
+		lcd_led_on(2000);
 		adc_read(&adc_data);
 		printf("jas = %d",adc_data);
 		vTaskDelay(8000/portTICK_PERIOD_MS);
 		led_blik(100);
 		tisk_teplota();
+		lcd_led_on(2000);
 		vTaskDelay(8000/portTICK_PERIOD_MS);
 //		adc_read(&adc_data);
 //		printf("jas = %d\n",adc_data);
