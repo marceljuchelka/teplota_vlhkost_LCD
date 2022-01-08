@@ -15,6 +15,7 @@
 #if prace == 1
 #define EXAMPLE_ESP_WIFI_SSID       "Svereo wifi"
 #define EXAMPLE_ESP_WIFI_PASS		"svereo1122"
+#define jas							3
 #else
 #define EXAMPLE_ESP_WIFI_SSID       "Hoass"
 #define EXAMPLE_ESP_WIFI_PASS		"Hoas12345"

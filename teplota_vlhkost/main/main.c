@@ -37,7 +37,7 @@
 #if prace == 1
 	#define senzor_web_teplota	"&sensor[marcel_teplota_prace]="
 	#define senzor_web_vlhkost	"&sensor[marcel_vlhkost_prace]="
-	#define senzor_web_vlhkost	"&sensor[marcel_jas_prace]="
+	#define senzor_web_jas		"&sensor[marcel_jas_prace]="
 #else
 	#define senzor_web_teplota	"&sensor[marcel_teplota_doma]="
 	#define senzor_web_vlhkost	"&sensor[marcel_vlhkost_doma]="
@@ -75,6 +75,8 @@ static void http_get_task(uint8_t velicina,float* hodnota)
 
 	if(velicina == temperat) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_teplota,*hodnota);
 	else sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_vlhkost,*hodnota);
+//	if(velicina == humidy) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_vlhkost,*hodnota);
+//	if(velicina == jas) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_jas,*hodnota);
 //	printf("buf = %s\n",buf);
 	sprintf(request,"GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: esp-idf/1.0 esp32\r\n"
 			"\r\n", buf,WEB_SERVER);
@@ -310,6 +312,7 @@ void app_main()
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
     wifi_init_sta();
+
 	my_i2c_pcf8574_config();
 	lcd_init();
 		lcd_str("START PROGRAMU");
@@ -317,7 +320,6 @@ void app_main()
 		lcd_cls();
 
 	while(1){
-		uroven^= 1;
 		tisk_vlhkost();
 		led_blik(100);
 		adc_read(&adc_data);
@@ -325,9 +327,11 @@ void app_main()
 		vTaskDelay(8000/portTICK_PERIOD_MS);
 		led_blik(100);
 		tisk_teplota();
-		adc_read(&adc_data);
-		printf("jas = %d\n",adc_data);
 		vTaskDelay(8000/portTICK_PERIOD_MS);
+//		adc_read(&adc_data);
+//		printf("jas = %d\n",adc_data);
+//		http_get_task(jas, &adc_data);
+//		vTaskDelay(8000/portTICK_PERIOD_MS);
 
 
 	}
