@@ -37,10 +37,14 @@
 
 
 
-#if prace == 1
+#if witty == 1
 	#define senzor_web_teplota	"&sensor[marcel_teplota_prace]="
 	#define senzor_web_vlhkost	"&sensor[marcel_vlhkost_prace]="
 	#define senzor_web_jas		"&sensor[marcel_jas_prace]="
+	#define pin_red_led			15
+	#define pin_green_led		12
+	#define pin_blue_led		13
+
 #else
 	#define senzor_web_teplota	"&sensor[marcel_teplota_doma]="
 	#define senzor_web_vlhkost	"&sensor[marcel_vlhkost_doma]="
@@ -77,9 +81,9 @@ static void http_get_task(uint8_t velicina,float* hodnota)
 	char *REQUEST = &request[0];
 
 	if(velicina == temperat) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_teplota,*hodnota);
-	else sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_vlhkost,*hodnota);
-//	if(velicina == humidy) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_vlhkost,*hodnota);
-//	if(velicina == jas) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_jas,*hodnota);
+//	else sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_vlhkost,*hodnota);
+	if(velicina == humidy) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_vlhkost,*hodnota);
+	if(velicina == jas) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_jas,*hodnota);
 //	printf("buf = %s\n",buf);
 	sprintf(request,"GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: esp-idf/1.0 esp32\r\n"
 			"\r\n", buf,WEB_SERVER);
@@ -237,6 +241,7 @@ void tisk_cas(){
 
 void led_blik(uint16_t cas){
 	uint8_t uroven = 0;
+
 	gpio_set_level(led_pin_mb, 0);
 	vTaskDelay(cas/portTICK_PERIOD_MS);
 	gpio_set_level(led_pin_mb, 1);
@@ -316,7 +321,7 @@ void app_main()
 	adc_init(&adc_conf);
 
 
-		vTaskDelay(500/portTICK_PERIOD_MS);
+	vTaskDelay(2000/portTICK_PERIOD_MS);
 	gpio_set_direction(led_pin_mb, GPIO_MODE_OUTPUT);
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
@@ -332,9 +337,15 @@ void app_main()
 		led_blik(100);
 		tisk_vlhkost();
 		lcd_led_on(2000);
+		vTaskDelay(4000/portTICK_PERIOD_MS);
 		adc_read(&adc_data);
-		printf("jas = %d",adc_data);
-		vTaskDelay(8000/portTICK_PERIOD_MS);
+//		printf("********* jas = %d\n",adc_data);
+
+		float  i = ((float)adc_data/10);
+		printf("***********************jas adc = %d **************************\n",adc_data);
+		printf("*******************jas pointer = %2.2f **************************\n",i);
+		http_get_task(jas, &i);
+		vTaskDelay(4000/portTICK_PERIOD_MS);
 		led_blik(100);
 		tisk_teplota();
 		lcd_led_on(2000);

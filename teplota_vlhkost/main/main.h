@@ -11,8 +11,8 @@
 #include "driver/i2c.h"
 
 /* deklarace */
-#define prace  0
-#if prace == 1
+#define witty  1
+#if witty == 1
 #define EXAMPLE_ESP_WIFI_SSID       "Svereo wifi"
 #define EXAMPLE_ESP_WIFI_PASS		"svereo1122"
 #define jas							3
