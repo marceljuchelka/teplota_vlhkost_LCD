@@ -11,6 +11,7 @@
 #include "freertos/task.h"
 #include "driver/i2c.h"
 #include "mj_am2320b.h"
+#include "sdkconfig.h"
 
 
 

@@ -27,7 +27,7 @@
 #include "time.h"
 #include <netdb.h>
 #include "../components/mylib/mylib.h"
-#include "../components/MJ_AM2320B/mj_am2320b.h"
+//#include "../components/MJ_AM2320B/mj_am2320b.h"
 #include "../components/MJ_HDC1080/hdc1080.h"
 #include "../components/MK_LCD/mk_lcd44780.h"
 #include "../main/main.h"
@@ -80,9 +80,9 @@ static void http_get_task(uint8_t velicina,float* hodnota)
 	char request[200];
 	char *REQUEST = &request[0];
 
-	if(velicina == temperat) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_teplota,*hodnota);
-//	else sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_vlhkost,*hodnota);
-	if(velicina == humidy) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_vlhkost,*hodnota);
+	if(velicina == teplota_wifi) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_teplota,*hodnota);
+	else sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_vlhkost,*hodnota);
+	if(velicina == vlhkost_wifi) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_vlhkost,*hodnota);
 	if(velicina == jas) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_jas,*hodnota);
 //	printf("buf = %s\n",buf);
 	sprintf(request,"GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: esp-idf/1.0 esp32\r\n"
@@ -217,21 +217,27 @@ esp_err_t test_i2c(uint8_t data){
 
 void tisk_teplota(){
     char buff[16];
-    float AM_teplota;
-	AM_teplota = am2320_getdata(temperat);
-	printf("teplota AM2320 = %2.1f\n", AM_teplota);
-	sprintf(buff,"teplota %2.1f", AM_teplota);
-	http_get_task(temperat, &AM_teplota);
+    float HDC_teplota;
+    HDC_teplota = hdc1080_read_temp();
+    printf("teplota HDC1080 = %2.1f\n", HDC_teplota);
+    sprintf(buff,"teplota %2.1f", HDC_teplota);
+//	AM_teplota = am2320_getdata(temperat);
+//	printf("teplota AM2320 = %2.1f\n", AM_teplota);
+	sprintf(buff,"teplota %2.1f", HDC_teplota);
+	http_get_task(teplota_wifi, &HDC_teplota);
 	lcd_str_al(0, 0, buff, _left);
 }
 
 void tisk_vlhkost(){
     char buff[16];
-    float AM_vlhkost;
-	AM_vlhkost = am2320_getdata(humidy);
-	printf("vlhkost AM2320 = %2.1f\n", AM_vlhkost);
-	sprintf(buff,"vlhkost %2.1f", AM_vlhkost);
-	http_get_task(humidy, &AM_vlhkost);
+    float HDC_vlhkost;
+    HDC_vlhkost = hdc1080_read_hum();
+    printf("vlhkost HDC1080 = %2.1f\n", HDC_vlhkost);
+    sprintf(buff,"vlhkost %2.1f", HDC_vlhkost);
+//	AM_vlhkost = am2320_getdata(humidy);
+//	printf("vlhkost HDC = %2.1f\n", AM_vlhkost);
+	sprintf(buff,"vlhkost %2.1f", HDC_vlhkost);
+	http_get_task(vlhkost_wifi, &HDC_vlhkost);
 	lcd_str_al(1, 0, buff, _left);
 }
 
@@ -240,8 +246,6 @@ void tisk_cas(){
 }
 
 void led_blik(uint16_t cas){
-	uint8_t uroven = 0;
-
 	gpio_set_level(led_pin_mb, 0);
 	vTaskDelay(cas/portTICK_PERIOD_MS);
 	gpio_set_level(led_pin_mb, 1);
@@ -314,48 +318,34 @@ void wifi_init_sta(void)
 
 void app_main()
 {
-	uint16_t uroven = 0, adc_data = 0;
+	uint16_t adc_data = 0;
 	adc_config_t adc_conf;
 	adc_conf.mode = ADC_READ_TOUT_MODE;
 	adc_conf.clk_div = 8;
 	adc_init(&adc_conf);
-
-
-	vTaskDelay(2000/portTICK_PERIOD_MS);
-	gpio_set_direction(led_pin_mb, GPIO_MODE_OUTPUT);
-    ESP_ERROR_CHECK(nvs_flash_init());
-    ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
-    wifi_init_sta();
-
 	my_i2c_pcf8574_config();
 	lcd_init();
-		lcd_str("START PROGRAMU");
-		vTaskDelay(1000/portTICK_PERIOD_MS);
-		lcd_cls();
+//	hdc1080_read_temp();
+	lcd_str("START PROGRAMU");
+	gpio_set_direction(led_pin_mb, GPIO_MODE_OUTPUT);
+	ESP_ERROR_CHECK(nvs_flash_init());
+	ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
+	wifi_init_sta();
+	lcd_cls();
+	vTaskDelay(4000/portTICK_PERIOD_MS);
 
 	while(1){
-		led_blik(100);
-		tisk_vlhkost();
+		tisk_teplota();
 		lcd_led_on(2000);
 		vTaskDelay(4000/portTICK_PERIOD_MS);
 		adc_read(&adc_data);
-//		printf("********* jas = %d\n",adc_data);
-
 		float  i = ((float)adc_data/10);
-		printf("***********************jas adc = %d **************************\n",adc_data);
 		printf("*******************jas pointer = %2.2f **************************\n",i);
 		http_get_task(jas, &i);
 		vTaskDelay(4000/portTICK_PERIOD_MS);
-		led_blik(100);
-		tisk_teplota();
+		tisk_vlhkost();
 		lcd_led_on(2000);
-		vTaskDelay(8000/portTICK_PERIOD_MS);
-//		adc_read(&adc_data);
-//		printf("jas = %d\n",adc_data);
-//		http_get_task(jas, &adc_data);
-//		vTaskDelay(8000/portTICK_PERIOD_MS);
-
-
+		vTaskDelay(4000/portTICK_PERIOD_MS);
 	}
 
 

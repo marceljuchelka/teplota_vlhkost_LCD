@@ -46,6 +46,11 @@ typedef union{
 	};
 }HDC1080_READ_VALUE;
 
+enum{
+	HDC_temperature,
+	HDC_humidy,
+};
+
 enum {
 	_i2c_write,
 	_i2c_read,
@@ -76,6 +81,11 @@ typedef enum {
 	RST = 	15,				//0x8000,
 }dev_config;
 
+typedef enum{
+	mode_1 = 0,
+	mode_2 = 1,
+}dev_mode;
+
 typedef enum {
 	TempMR_11_bit = 0,
 	TempMR_14_bit = 1,
@@ -93,6 +103,7 @@ void hdc1080_init();
 uint16_t hdc1080_read_register(reg_map set_register);
 float hdc1080_read_hum();
 float hdc1080_read_temp();
+esp_err_t hdc1080_measure(float *temp, float *hum);
 int hdc1080_test();
 
 #endif /* MJ_HDC1080_HDC1080_H_ */
