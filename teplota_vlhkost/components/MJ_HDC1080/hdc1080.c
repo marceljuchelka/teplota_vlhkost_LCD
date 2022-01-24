@@ -115,7 +115,7 @@ float hdc1080_read_hum(){
 
 	/*start mereni od 0 */
 	hdc_start_mereni(reg_Humidity);
-	vTaskDelay(10/portTICK_PERIOD_MS);
+	vTaskDelay(12/portTICK_PERIOD_MS);
 	i2c_cmd_handle_t cmd;
 	cmd = i2c_cmd_link_create();
 	i2c_master_start(cmd);
@@ -141,8 +141,8 @@ float hdc1080_read_temp(){
 	/*start mereni od 0 */
 	hdc_start_mereni(reg_Temperature);
 	/*cekani na prevod*/
-	vTaskDelay(10/portTICK_PERIOD_MS);
-	/*nacteni 4 byte */
+	vTaskDelay(12/portTICK_PERIOD_MS);
+	/*nacteni 2 byte */
 	i2c_cmd_handle_t cmd;
 	cmd = i2c_cmd_link_create();
 	i2c_master_start(cmd);
@@ -165,7 +165,7 @@ esp_err_t hdc1080_measure(float *temp, float *hum){
 	config_register = (HumMR_11_bit << HRES) | (TempMR_11_bit << TRES) | (mode_2 << MODE);
 	hdc1080_write_register(reg_Configuration, config_register);
 	hdc_start_mereni(reg_Temperature);
-	vTaskDelay(10/portTICK_PERIOD_MS);
+	vTaskDelay(12/portTICK_PERIOD_MS);
 	i2c_cmd_handle_t cmd;
 	cmd = i2c_cmd_link_create();
 	i2c_master_start(cmd);

@@ -83,7 +83,7 @@ static void http_get_task(uint8_t velicina,float* hodnota)
 	if(velicina == teplota_wifi) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_teplota,*hodnota);
 	else sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_vlhkost,*hodnota);
 	if(velicina == vlhkost_wifi) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_vlhkost,*hodnota);
-	if(velicina == jas) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_jas,*hodnota);
+//	if(velicina == jas) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_jas,*hodnota);
 //	printf("buf = %s\n",buf);
 	sprintf(request,"GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: esp-idf/1.0 esp32\r\n"
 			"\r\n", buf,WEB_SERVER);
@@ -337,15 +337,17 @@ void app_main()
 	while(1){
 		tisk_teplota();
 		lcd_led_on(2000);
-		vTaskDelay(4000/portTICK_PERIOD_MS);
+		vTaskDelay(8000/portTICK_PERIOD_MS);
+#if	witty == 1
 		adc_read(&adc_data);
 		float  i = ((float)adc_data/10);
 		printf("*******************jas pointer = %2.2f **************************\n",i);
-		http_get_task(jas, &i);
-		vTaskDelay(4000/portTICK_PERIOD_MS);
+//		http_get_task(jas, &i);
+		vTaskDelay(8000/portTICK_PERIOD_MS);
+#endif
 		tisk_vlhkost();
 		lcd_led_on(2000);
-		vTaskDelay(4000/portTICK_PERIOD_MS);
+		vTaskDelay(8000/portTICK_PERIOD_MS);
 	}
 
 
