@@ -113,9 +113,13 @@ float hdc1080_read_hum(){
 	config_register = (HumMR_11_bit << HRES) | (TempMR_11_bit << TRES) | (mode_1 << MODE);
 	hdc1080_write_register(reg_Configuration, config_register);
 
-	/*start mereni od 0 */
+	/*start mereni od */
 	hdc_start_mereni(reg_Humidity);
+
+	/* cekani na prevod */
 	vTaskDelay(12/portTICK_PERIOD_MS);
+
+	/* stazeni 2 bytu */
 	i2c_cmd_handle_t cmd;
 	cmd = i2c_cmd_link_create();
 	i2c_master_start(cmd);
@@ -124,7 +128,8 @@ float hdc1080_read_hum(){
 	i2c_master_stop(cmd);
 	if(i2c_master_cmd_begin(I2C_NUM_0, cmd, 1000 / portTICK_RATE_MS) != ESP_OK) printf("chyba hum");
 	i2c_cmd_link_delete(cmd);
-	printf("readhumpraw = %X\n", hodnoty.humid_r);
+
+	/* vypocet hodnot  */
 	float hum_F = swap_uint16(hodnoty.humid_r);
 	hum_F  = ((float)hum_F*100)/65536;
  	return hum_F;
@@ -138,8 +143,10 @@ float hdc1080_read_temp(){
 	dev_config config_register = 0;
 	config_register = (HumMR_11_bit << HRES) | (TempMR_11_bit << TRES) | (mode_1 << MODE);
 	hdc1080_write_register(reg_Configuration, config_register);
-	/*start mereni od 0 */
+
+	/*start mereni  */
 	hdc_start_mereni(reg_Temperature);
+
 	/*cekani na prevod*/
 	vTaskDelay(12/portTICK_PERIOD_MS);
 	/*nacteni 2 byte */
@@ -151,12 +158,10 @@ float hdc1080_read_temp(){
 	i2c_master_stop(cmd);
 	if(i2c_master_cmd_begin(I2C_NUM_0, cmd, 1000 / portTICK_RATE_MS) != ESP_OK) printf("chyba temp");
 	i2c_cmd_link_delete(cmd);
-	printf("read temp raw = %X  %X\n", hodnoty.bytes[0], hodnoty.bytes[1]);
+
+	/* vypocet hodnoty */
 	temp = swap_uint16(hodnoty.temp_r);
 	temp_F = ((((float)temp)/(float)0xFFFF)*((float)165)-(float)40);
-//	temp32 = ((uint32_t)temp * 165 /65536)-40;
-//	temp = (uint16_t) temp_F;
-//	i2c_driver_delete(I2C_NUM_0);
 	return temp_F;
 }
 esp_err_t hdc1080_measure(float *temp, float *hum){
@@ -179,9 +184,6 @@ esp_err_t hdc1080_measure(float *temp, float *hum){
 	*temp = swap_uint16(hodnoty.temp_r);
 	*temp = (*temp)/(0xFFFF)*(165)-(40);
 	printf("temp = %2.2f",*temp);
-//	hum32 = ((uint32_t)hum*100l/65536l);
-
-//	i2c_driver_delete(I2C_NUM_0);
  	return ESP_OK;
 }
 
@@ -205,14 +207,11 @@ int hdc1080_test(){
 
 void hdc1080_init(){
 	dev_config config_register = 0;
-//	my_i2c_config();
 	printf("config register init = %X\n", hdc1080_read_register(reg_Configuration));
 	config_register|= (HumMR_11_bit << HRES) | (TempMR_11_bit << TRES) | (mode_1 << MODE);
-//	printf("config register pred zapisem = %X\n", config_register);
 	hdc1080_write_register(reg_Configuration, config_register);
 	printf("config register init po zapisu = %X\n", hdc1080_read_register(reg_Configuration));
 	printf("config registrer device ID = %d\n", hdc1080_read_register(reg_DeviceID));
-//	i2c_driver_delete(I2C_NUM_0);
 }
 
 

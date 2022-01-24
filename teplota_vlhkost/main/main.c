@@ -88,7 +88,7 @@ static void http_get_task(uint8_t velicina,float* hodnota)
 	sprintf(request,"GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: esp-idf/1.0 esp32\r\n"
 			"\r\n", buf,WEB_SERVER);
 
-	printf(REQUEST);
+//	printf(REQUEST);
 
 
 	const struct addrinfo hints = {

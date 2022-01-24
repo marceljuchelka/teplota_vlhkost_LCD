@@ -21,6 +21,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "mk_lcd44780.h"
+#include "sdkconfig.h"
 
 
 
