@@ -17,14 +17,16 @@
 #include "esp_netif.h"
 #include "esp_event.h"
 #include "esp_wifi.h"
+#include "esp_sntp.h"
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "driver/adc.h"
 
 #include "lwip/err.h"
 #include "lwip/sys.h"
-#include "sntp.h"
-#include "time.h"
+//#include "lwip/apps/sntp.h"
+//#include "sntp.h"
+//#include "time.h"
 #include <netdb.h>
 #include "../components/mylib/mylib.h"
 //#include "../components/MJ_AM2320B/mj_am2320b.h"
@@ -73,6 +75,99 @@ static const char *TAG1 = "example";
 //static const char	*http_web_url 	=	"GET " WEB_URL " HTTP/1.0\r\n"
 //static const char	*http_host 		= 	"Host: "WEB_SERVER"\r\n";
 //static const char	*http_user 		= 	"User-Agent: esp-idf/1.0 esp32\r\n r\n";
+
+/* priprava SMTP  */
+static void initialize_sntp(void)
+{
+    ESP_LOGI(TAG, "Initializing SNTP");
+    sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    sntp_setservername(0, "pool.ntp.org");
+    sntp_init();
+}
+
+static void obtain_time(void)
+{
+    initialize_sntp();
+
+    // wait for time to be set
+    time_t now = 0;
+    struct tm timeinfo = { 0 };
+    int retry = 0;
+    const int retry_count = 10;
+    char *TAG = "SNTP";
+
+    while (timeinfo.tm_year < (2016 - 1900) && ++retry < retry_count) {
+        ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        time(&now);
+        localtime_r(&now, &timeinfo);
+    }
+}
+
+esp_err_t tisk_casu(){
+	time_t now;
+    struct tm timeinfo;
+    char strftime_buf[64];
+    time(&now);
+    localtime_r(&now, &timeinfo);
+
+    // Je cas nastaven? (1970 - 1900).
+        if (timeinfo.tm_year < (2016 - 1900)) {
+            ESP_LOGI(TAG, "Time is not set yet. Connecting to WiFi and getting time over NTP.");
+            obtain_time();
+        }
+
+    /*nastaveni lokalniho casu na Cz */
+    setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
+     tzset();
+     time(&now);
+     localtime_r(&now, &timeinfo);
+     strftime(strftime_buf, sizeof(strftime_buf), "%d.%m.%Y %H:%M", &timeinfo);
+     ESP_LOGI(TAG, "Datum a cas v CR je: %s", strftime_buf);
+     printf(strftime_buf);
+     lcd_str_al(1, 0, strftime_buf, _left);
+//     printf("V CR %d:%d  %d.%d.%d.",timeinfo.tm_hour,timeinfo.tm_min,timeinfo.tm_mday, timeinfo.tm_mon, timeinfo.tm_);
+     ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
+
+	return 0;
+}
+
+static void sntp_example_task(void *arg)
+{
+    time_t now;
+    struct tm timeinfo;
+    char strftime_buf[64];
+
+    time(&now);
+    localtime_r(&now, &timeinfo);
+
+    // Is time set? If not, tm_year will be (1970 - 1900).
+    if (timeinfo.tm_year < (2016 - 1900)) {
+        ESP_LOGI(TAG, "Time is not set yet. Connecting to WiFi and getting time over NTP.");
+        obtain_time();
+    }
+
+    // Set timezone to Eastern Standard Time and print local time
+//    setenv("TZ", "EST5EDT,M3.2.0/2,M11.1.0", 1);
+    setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
+     tzset();
+
+     // update 'now' variable with current time
+     time(&now);
+     localtime_r(&now, &timeinfo);
+
+     if (timeinfo.tm_year < (2016 - 1900)) {
+         ESP_LOGE(TAG, "The current date/time error");
+     } else {
+         strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+         ESP_LOGI(TAG, "Datum/time in CR is: %s", strftime_buf);
+     }
+
+     ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
+     vTaskDelay(1000 / portTICK_RATE_MS);
+}
+
+
 
 static void http_get_task(uint8_t velicina,float* hodnota)
 {
@@ -155,21 +250,21 @@ static void http_get_task(uint8_t velicina,float* hodnota)
         ESP_LOGI(TAG1, "... set socket receiving timeout success");
 
         /* Read HTTP response */
-        do {
-            bzero(recv_buf, sizeof(recv_buf));
-            r = read(s, recv_buf, sizeof(recv_buf)-1);
-            for(int i = 0; i < r; i++) {
-                putchar(recv_buf[i]);
-            }
-        } while(r > 0);
-
-        ESP_LOGI(TAG1, "... done reading from socket. Last read return=%d errno=%d\r\n", r, errno);
-        close(s);
+//        do {
+//            bzero(recv_buf, sizeof(recv_buf));
+//            r = read(s, recv_buf, sizeof(recv_buf)-1);
+//            for(int i = 0; i < r; i++) {
+////                putchar(recv_buf[i]);
+//            }
+//        } while(r > 0);
+//
+//        ESP_LOGI(TAG1, "... done reading from socket. Last read return=%d errno=%d\r\n", r, errno);
+//        close(s);
 //        for(int countdown = 1; countdown >= 0; countdown--) {
 //            ESP_LOGI(TAG1, "%d... ", countdown);
 //            vTaskDelay(1000 / portTICK_PERIOD_MS);
 //        }
-        ESP_LOGI(TAG1, "Starting again!");
+//        ESP_LOGI(TAG1, "Starting again!");
 //    }
 }
 
@@ -220,10 +315,10 @@ void tisk_teplota(){
     float HDC_teplota;
     HDC_teplota = hdc1080_read_temp();
     printf("teplota HDC1080 = %2.1f\n", HDC_teplota);
-    sprintf(buff,"teplota %2.1f", HDC_teplota);
+//    sprintf(buff,"teplota %2.1f", HDC_teplota);
 //	AM_teplota = am2320_getdata(temperat);
 //	printf("teplota AM2320 = %2.1f\n", AM_teplota);
-	sprintf(buff,"teplota %2.1f", HDC_teplota);
+	sprintf(buff,"T- %2.1f", HDC_teplota);
 	http_get_task(teplota_wifi, &HDC_teplota);
 	lcd_str_al(0, 0, buff, _left);
 }
@@ -233,12 +328,12 @@ void tisk_vlhkost(){
     float HDC_vlhkost;
     HDC_vlhkost = hdc1080_read_hum();
     printf("vlhkost HDC1080 = %2.1f\n", HDC_vlhkost);
-    sprintf(buff,"vlhkost %2.1f", HDC_vlhkost);
+    sprintf(buff,"H- %2.1f", HDC_vlhkost);
 //	AM_vlhkost = am2320_getdata(humidy);
 //	printf("vlhkost HDC = %2.1f\n", AM_vlhkost);
-	sprintf(buff,"vlhkost %2.1f", HDC_vlhkost);
+//	sprintf(buff,"vlhkost %2.1f", HDC_vlhkost);
 	http_get_task(vlhkost_wifi, &HDC_vlhkost);
-	lcd_str_al(1, 0, buff, _left);
+	lcd_str_al(0, 15, buff, _right);
 }
 
 void tisk_cas(){
@@ -328,6 +423,8 @@ void app_main()
 //	hdc1080_read_temp();
 	lcd_str("START PROGRAMU");
 	gpio_set_direction(led_pin_mb, GPIO_MODE_OUTPUT);
+
+	/* priprava wifi */
 	ESP_ERROR_CHECK(nvs_flash_init());
 	ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
 	wifi_init_sta();
@@ -335,7 +432,10 @@ void app_main()
 	vTaskDelay(4000/portTICK_PERIOD_MS);
 
 	while(1){
+//		sntp_example_task(0);
+
 		tisk_teplota();
+		tisk_casu();
 		lcd_led_on(2000);
 		vTaskDelay(8000/portTICK_PERIOD_MS);
 #if	witty == 1
@@ -346,6 +446,7 @@ void app_main()
 		vTaskDelay(8000/portTICK_PERIOD_MS);
 #endif
 		tisk_vlhkost();
+		tisk_casu();
 		lcd_led_on(2000);
 		vTaskDelay(8000/portTICK_PERIOD_MS);
 	}
