@@ -50,6 +50,7 @@
 #else
 	#define senzor_web_teplota	"&sensor[marcel_teplota_doma]="
 	#define senzor_web_vlhkost	"&sensor[marcel_vlhkost_doma]="
+	#define senzor_web_restart	"&sensor[marcel_restart]="
 #endif
 #define led_pin_mb	2
 
@@ -105,6 +106,8 @@ static void obtain_time(void)
 }
 
 esp_err_t tisk_casu(){
+	char *TAG = "TISK CASU";
+
 	time_t now;
     struct tm timeinfo;
     char strftime_buf[64];
@@ -174,10 +177,11 @@ static void http_get_task(uint8_t velicina,float* hodnota)
 	char buf[90];
 	char request[200];
 	char *REQUEST = &request[0];
+	ESP_LOGI(TAG1,"velicina %d hodnota %2.1f",velicina,*hodnota);
 
 	if(velicina == teplota_wifi) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_teplota,*hodnota);
-	else sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_vlhkost,*hodnota);
 	if(velicina == vlhkost_wifi) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_vlhkost,*hodnota);
+	if(velicina == restart_wifi) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_restart,*hodnota);
 //	if(velicina == jas) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_jas,*hodnota);
 //	printf("buf = %s\n",buf);
 	sprintf(request,"GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: esp-idf/1.0 esp32\r\n"
@@ -248,6 +252,7 @@ static void http_get_task(uint8_t velicina,float* hodnota)
 //            continue;
         }
         ESP_LOGI(TAG1, "... set socket receiving timeout success");
+        close(s);
 
         /* Read HTTP response */
 //        do {
@@ -315,9 +320,6 @@ void tisk_teplota(){
     float HDC_teplota;
     HDC_teplota = hdc1080_read_temp();
     printf("teplota HDC1080 = %2.1f\n", HDC_teplota);
-//    sprintf(buff,"teplota %2.1f", HDC_teplota);
-//	AM_teplota = am2320_getdata(temperat);
-//	printf("teplota AM2320 = %2.1f\n", AM_teplota);
 	sprintf(buff,"T- %2.1f", HDC_teplota);
 	http_get_task(teplota_wifi, &HDC_teplota);
 	lcd_str_al(0, 0, buff, _left);
@@ -329,14 +331,14 @@ void tisk_vlhkost(){
     HDC_vlhkost = hdc1080_read_hum();
     printf("vlhkost HDC1080 = %2.1f\n", HDC_vlhkost);
     sprintf(buff,"H- %2.1f", HDC_vlhkost);
-//	AM_vlhkost = am2320_getdata(humidy);
-//	printf("vlhkost HDC = %2.1f\n", AM_vlhkost);
-//	sprintf(buff,"vlhkost %2.1f", HDC_vlhkost);
 	http_get_task(vlhkost_wifi, &HDC_vlhkost);
 	lcd_str_al(0, 15, buff, _right);
 }
 
-void tisk_cas(){
+void tisk_restart(float num){
+	char *TAG = "RESTART";
+	ESP_LOGI(TAG, "odeslani restartu %2.1f", num);
+	http_get_task(restart_wifi, &num );
 
 }
 
@@ -429,7 +431,8 @@ void app_main()
 	ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
 	wifi_init_sta();
 	lcd_cls();
-	vTaskDelay(4000/portTICK_PERIOD_MS);
+	tisk_restart(10.0);
+	vTaskDelay(2000/portTICK_PERIOD_MS);
 
 	while(1){
 //		sntp_example_task(0);
@@ -437,6 +440,7 @@ void app_main()
 		tisk_teplota();
 		tisk_casu();
 		lcd_led_on(2000);
+		tisk_restart(1.0);
 		vTaskDelay(8000/portTICK_PERIOD_MS);
 #if	witty == 1
 		adc_read(&adc_data);
@@ -448,6 +452,7 @@ void app_main()
 		tisk_vlhkost();
 		tisk_casu();
 		lcd_led_on(2000);
+		tisk_restart(1.0);
 		vTaskDelay(8000/portTICK_PERIOD_MS);
 	}
 

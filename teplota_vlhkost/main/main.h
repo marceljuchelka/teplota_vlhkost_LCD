@@ -31,6 +31,8 @@
 enum {
 	vlhkost_wifi,
 	teplota_wifi,
+	jas_wifi,
+	restart_wifi,
 };
 
 
