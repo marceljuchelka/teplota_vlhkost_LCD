@@ -18,6 +18,7 @@
 #include "esp_event.h"
 #include "esp_wifi.h"
 #include "esp_sntp.h"
+#include "esp_task_wdt.h"
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "driver/adc.h"
@@ -28,10 +29,6 @@
 //#include "sntp.h"
 //#include "time.h"
 #include <netdb.h>
-#include "../components/mylib/mylib.h"
-//#include "../components/MJ_AM2320B/mj_am2320b.h"
-#include "../components/MJ_HDC1080/hdc1080.h"
-#include "../components/MK_LCD/mk_lcd44780.h"
 #include "../main/main.h"
 #include "sdkconfig.h"
 
@@ -67,6 +64,7 @@ static int s_retry_num = 0;
 //#define WEB_URL "http://meter.v108b.com/sensor/receive/?module=marcel&sensor[marcel_teplota]=22.0"
 
 static const char *TAG1 = "example";
+static const char *HODNOTA1 = "hodnota1";
 
 //static const char *REQUEST = "GET " WEB_URL " HTTP/1.0\r\n"
 //    "Host: "WEB_SERVER"\r\n"
@@ -126,10 +124,8 @@ esp_err_t tisk_casu(){
      time(&now);
      localtime_r(&now, &timeinfo);
      strftime(strftime_buf, sizeof(strftime_buf), "%d.%m.%Y %H:%M", &timeinfo);
-     ESP_LOGI(TAG, "Datum a cas v CR je: %s", strftime_buf);
+//     ESP_LOGI(TAG, "Datum a cas v CR je: %s", strftime_buf);
      printf(strftime_buf);
-     lcd_str_al(1, 0, strftime_buf, _left);
-//     printf("V CR %d:%d  %d.%d.%d.",timeinfo.tm_hour,timeinfo.tm_min,timeinfo.tm_mday, timeinfo.tm_mon, timeinfo.tm_);
      ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
 
 	return 0;
@@ -303,56 +299,10 @@ uint16_t test_num(uint8_t byte_hi, uint8_t byte_lo){
 	return vysledek;
 }
 
-esp_err_t test_i2c(uint8_t data){
-	i2c_cmd_handle_t cmd;
-	esp_err_t ret = 0;
-	cmd = i2c_cmd_link_create();
-	i2c_master_start(cmd);
-	i2c_master_write_byte(cmd, data&0xFE, I2C_MASTER_ACK);
-	i2c_master_stop(cmd);
-	printf("ret = %d\n", i2c_master_cmd_begin(I2C_NUM_0, cmd, 1000/portTICK_RATE_MS));
-	i2c_cmd_link_delete(cmd);
-	return ret;
-}
 
-void tisk_teplota(){
-    char buff[16];
-    float HDC_teplota;
-    HDC_teplota = hdc1080_read_temp();
-    printf("teplota HDC1080 = %2.1f\n", HDC_teplota);
-	sprintf(buff,"T- %2.1f", HDC_teplota);
-	http_get_task(teplota_wifi, &HDC_teplota);
-	lcd_str_al(0, 0, buff, _left);
-}
 
-void tisk_vlhkost(){
-    char buff[16];
-    float HDC_vlhkost;
-    HDC_vlhkost = hdc1080_read_hum();
-    printf("vlhkost HDC1080 = %2.1f\n", HDC_vlhkost);
-    sprintf(buff,"H- %2.1f", HDC_vlhkost);
-	http_get_task(vlhkost_wifi, &HDC_vlhkost);
-	lcd_str_al(0, 15, buff, _right);
-}
 
-void tisk_restart(float num){
-	char *TAG = "RESTART";
-	ESP_LOGI(TAG, "odeslani restartu %2.1f", num);
-	http_get_task(restart_wifi, &num );
 
-}
-
-void led_blik(uint16_t cas){
-	gpio_set_level(led_pin_mb, 0);
-	vTaskDelay(cas/portTICK_PERIOD_MS);
-	gpio_set_level(led_pin_mb, 1);
-}
-
-void lcd_led_on(uint16_t cas){
-	lcd_LED(1);
-	vTaskDelay(cas/portTICK_PERIOD_MS);
-	lcd_LED(0);
-}
 void wifi_init_sta(void)
 {
     s_wifi_event_group = xEventGroupCreate();
@@ -413,48 +363,83 @@ void wifi_init_sta(void)
     vEventGroupDelete(s_wifi_event_group);
 }
 
+void tisk_teplota(void *pvParameters){
+	char *TAG = "tisk_teplota";
+	for(;;){
+	printf("tisk teplota 1\n");
+	vTaskDelay(1000 / portTICK_PERIOD_MS);
+    ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
+	}
+}
+
+void tisk_vlhkost(void *pvParameters){
+	char *TAG = "tisk_vlhkost";
+	for(;;){
+	printf("tisk vlhkost 2\n");
+	vTaskDelay(1000 / portTICK_PERIOD_MS);
+    ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
+	}
+}
+
+void tisk_hodnot(void *pvParameters){
+	char *ktisku;
+	ktisku = (char*)pvParameters;
+	char *TAG = "tisk_hodnoty";
+	for(;;){
+	printf("tisk hodnoty 3 %s\n",ktisku);
+	vTaskDelay(1000 / portTICK_PERIOD_MS);
+    ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
+	}
+}
+
+void tisk_restart(void *pvParameters){
+	char *TAG = "RESTART";
+	ESP_LOGI(TAG, "odeslani restartu");
+}
+
+void blik_led(void *pvParameters) {
+	uint16_t cas = 100;
+	char *TAG = "LED BLIK";
+	for (;;) {
+		ESP_LOGI(TAG, "led on");
+		gpio_set_level(led_pin_mb, 0);
+		vTaskDelay(cas / portTICK_PERIOD_MS);
+		ESP_LOGI(TAG, "led off");
+		gpio_set_level(led_pin_mb, 1);
+		esp_task_wdt_reset();
+		vTaskDelay(cas*10 / portTICK_PERIOD_MS);
+	}
+}
 void app_main()
 {
-	uint16_t adc_data = 0;
-	adc_config_t adc_conf;
-	adc_conf.mode = ADC_READ_TOUT_MODE;
-	adc_conf.clk_div = 8;
-	adc_init(&adc_conf);
-	my_i2c_pcf8574_config();
-	lcd_init();
-//	hdc1080_read_temp();
-	lcd_str("START PROGRAMU");
+//	uint16_t adc_data = 0;
+//	adc_config_t adc_conf;
+//	adc_conf.mode = ADC_READ_TOUT_MODE;
+//	adc_conf.clk_div = 8;
+//	adc_init(&adc_conf);
 	gpio_set_direction(led_pin_mb, GPIO_MODE_OUTPUT);
+//
+//	/* priprava wifi */
+//	ESP_ERROR_CHECK(nvs_flash_init());
+//	ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
+//	wifi_init_sta();
+//	vTaskDelay(2000/portTICK_PERIOD_MS);
+//
+//	while(1){
+//
+//		tisk_teplota();
+//		tisk_casu();
+//		vTaskDelay(1000/portTICK_PERIOD_MS);
+//		tisk_vlhkost();
+//		tisk_casu();
+//		vTaskDelay(1000/portTICK_PERIOD_MS);
+//	}
+	xTaskCreate(tisk_teplota, "tiskteplota", 2000, NULL, 1, NULL);
+	xTaskCreate(tisk_vlhkost, "tiskvlhkost", 2000, NULL, 1, NULL);
+	xTaskCreate(tisk_hodnot, "tiskhodnot", 2000, TAG1, 1, NULL);
+	xTaskCreate(blik_led, "blikled", 2000, NULL, 1, NULL);
 
-	/* priprava wifi */
-	ESP_ERROR_CHECK(nvs_flash_init());
-	ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
-	wifi_init_sta();
-	lcd_cls();
-	tisk_restart(10.0);
-	vTaskDelay(2000/portTICK_PERIOD_MS);
-
-	while(1){
-//		sntp_example_task(0);
-
-		tisk_teplota();
-		tisk_casu();
-		lcd_led_on(2000);
-		tisk_restart(1.0);
-		vTaskDelay(8000/portTICK_PERIOD_MS);
-#if	witty == 1
-		adc_read(&adc_data);
-		float  i = ((float)adc_data/10);
-		printf("*******************jas pointer = %2.2f **************************\n",i);
-//		http_get_task(jas, &i);
-		vTaskDelay(8000/portTICK_PERIOD_MS);
-#endif
-		tisk_vlhkost();
-		tisk_casu();
-		lcd_led_on(2000);
-		tisk_restart(1.0);
-		vTaskDelay(8000/portTICK_PERIOD_MS);
-	}
+	for(;;);
 
 
 }
