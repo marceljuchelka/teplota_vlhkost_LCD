@@ -64,7 +64,7 @@ static int s_retry_num = 0;
 //#define WEB_URL "http://meter.v108b.com/sensor/receive/?module=marcel&sensor[marcel_teplota]=22.0"
 
 static const char *TAG1 = "example";
-static const char *HODNOTA1 = "hodnota1";
+static const char *HODNOTA11 = "hodnota11";
 
 //static const char *REQUEST = "GET " WEB_URL " HTTP/1.0\r\n"
 //    "Host: "WEB_SERVER"\r\n"
@@ -367,8 +367,8 @@ void tisk_teplota(void *pvParameters){
 	char *TAG = "tisk_teplota";
 	for(;;){
 	printf("tisk teplota 1\n");
-	vTaskDelay(1000 / portTICK_PERIOD_MS);
     ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
+	vTaskDelay(1000 / portTICK_PERIOD_MS);
 	}
 }
 
@@ -376,8 +376,8 @@ void tisk_vlhkost(void *pvParameters){
 	char *TAG = "tisk_vlhkost";
 	for(;;){
 	printf("tisk vlhkost 2\n");
-	vTaskDelay(1000 / portTICK_PERIOD_MS);
     ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
+	vTaskDelay(1000 / portTICK_PERIOD_MS);
 	}
 }
 
@@ -387,8 +387,8 @@ void tisk_hodnot(void *pvParameters){
 	char *TAG = "tisk_hodnoty";
 	for(;;){
 	printf("tisk hodnoty 3 %s\n",ktisku);
-	vTaskDelay(1000 / portTICK_PERIOD_MS);
     ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
+	vTaskDelay(1000 / portTICK_PERIOD_MS);
 	}
 }
 
@@ -436,7 +436,7 @@ void app_main()
 //	}
 	xTaskCreate(tisk_teplota, "tiskteplota", 2000, NULL, 1, NULL);
 	xTaskCreate(tisk_vlhkost, "tiskvlhkost", 2000, NULL, 1, NULL);
-	xTaskCreate(tisk_hodnot, "tiskhodnot", 2000, TAG1, 1, NULL);
+	xTaskCreate(tisk_hodnot, "tiskhodnot", 2000,(void*) HODNOTA11, 1, NULL);
 	xTaskCreate(blik_led, "blikled", 2000, NULL, 1, NULL);
 
 	for(;;);
