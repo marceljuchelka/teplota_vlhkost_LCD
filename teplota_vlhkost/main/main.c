@@ -398,13 +398,12 @@ void tisk_restart(void *pvParameters){
 }
 
 void blik_led(void *pvParameters) {
-	uint16_t cas = 100;
+	uint16_t cas = 1;
 	char *TAG = "LED BLIK";
 	for (;;) {
-		ESP_LOGI(TAG, "led on");
+		ESP_LOGI(TAG, "led blik");
 		gpio_set_level(led_pin_mb, 0);
 		vTaskDelay(cas / portTICK_PERIOD_MS);
-		ESP_LOGI(TAG, "led off");
 		gpio_set_level(led_pin_mb, 1);
 		esp_task_wdt_reset();
 		vTaskDelay(cas*10 / portTICK_PERIOD_MS);
