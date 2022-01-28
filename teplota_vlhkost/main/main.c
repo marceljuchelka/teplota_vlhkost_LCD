@@ -320,7 +320,7 @@ void tisk_teplota(){
     float HDC_teplota;
     HDC_teplota = hdc1080_read_temp();
     printf("teplota HDC1080 = %2.1f\n", HDC_teplota);
-	sprintf(buff,"T- %2.1f", HDC_teplota);
+	sprintf(buff,"%2.1f%cC" , HDC_teplota,0xDF);
 	http_get_task(teplota_wifi, &HDC_teplota);
 	lcd_str_al(0, 0, buff, _left);
 }
@@ -330,7 +330,7 @@ void tisk_vlhkost(){
     float HDC_vlhkost;
     HDC_vlhkost = hdc1080_read_hum();
     printf("vlhkost HDC1080 = %2.1f\n", HDC_vlhkost);
-    sprintf(buff,"H- %2.1f", HDC_vlhkost);
+    sprintf(buff,"%2.1f%c", HDC_vlhkost,0x25);
 	http_get_task(vlhkost_wifi, &HDC_vlhkost);
 	lcd_str_al(0, 15, buff, _right);
 }
