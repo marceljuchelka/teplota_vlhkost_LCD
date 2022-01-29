@@ -406,7 +406,7 @@ void blik_led(void *pvParameters) {
 		vTaskDelay(cas / portTICK_PERIOD_MS);
 		gpio_set_level(led_pin_mb, 1);
 		esp_task_wdt_reset();
-		vTaskDelay(cas*10 / portTICK_PERIOD_MS);
+		vTaskDelay(cas*6 / portTICK_PERIOD_MS);
 	}
 }
 void app_main()
