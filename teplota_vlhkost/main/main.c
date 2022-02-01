@@ -367,7 +367,7 @@ void tisk_teplota(void *pvParameters){
 	char *TAG = "tisk_teplota";
 	for(;;){
 	printf("tisk teplota 1\n");
-    ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
+//    ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
 	vTaskDelay(1000 / portTICK_PERIOD_MS);
 	}
 }
@@ -376,7 +376,7 @@ void tisk_vlhkost(void *pvParameters){
 	char *TAG = "tisk_vlhkost";
 	for(;;){
 	printf("tisk vlhkost 2\n");
-    ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
+//    ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
 	vTaskDelay(1000 / portTICK_PERIOD_MS);
 	}
 }
@@ -387,7 +387,7 @@ void tisk_hodnot(void *pvParameters){
 	char *TAG = "tisk_hodnoty";
 	for(;;){
 	printf("tisk hodnoty 3 %s\n",ktisku);
-    ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
+//    ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
 	vTaskDelay(1000 / portTICK_PERIOD_MS);
 	}
 }
@@ -398,15 +398,16 @@ void tisk_restart(void *pvParameters){
 }
 
 void blik_led(void *pvParameters) {
-	uint16_t cas = 1;
+	uint16_t cas = 3;
 	char *TAG = "LED BLIK";
 	for (;;) {
-		ESP_LOGI(TAG, "led blik");
+//		ESP_LOGI(TAG, "led blik");
 		gpio_set_level(led_pin_mb, 0);
 		vTaskDelay(cas / portTICK_PERIOD_MS);
+//		os_delay_us(1000);
 		gpio_set_level(led_pin_mb, 1);
 		esp_task_wdt_reset();
-		vTaskDelay(cas*6 / portTICK_PERIOD_MS);
+		vTaskDelay(6 / portTICK_PERIOD_MS);
 	}
 }
 void app_main()
