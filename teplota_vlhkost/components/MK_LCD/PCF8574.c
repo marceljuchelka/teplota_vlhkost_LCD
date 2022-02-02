@@ -11,7 +11,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <driver/i2c.h>
-
+#include "sdkconfig.h"
 #define I2C_SCL_PIN         	5               /*!< gpio number for I2C master clock */
 #define I2C_SDA_PIN        		4               /*!< gpio number for I2C master data  */
 

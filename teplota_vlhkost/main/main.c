@@ -32,6 +32,7 @@
 //#include "../components/MJ_AM2320B/mj_am2320b.h"
 #include "../components/MJ_HDC1080/hdc1080.h"
 #include "../components/MK_LCD/mk_lcd44780.h"
+#include "../components/TM_1637_LED/tm_1637_led.h"
 #include "../main/main.h"
 #include "sdkconfig.h"
 
@@ -43,6 +44,7 @@
 	#define senzor_web_teplota	"&sensor[marcel_teplota_prace]="
 	#define senzor_web_vlhkost	"&sensor[marcel_vlhkost_prace]="
 	#define senzor_web_jas		"&sensor[marcel_jas_prace]="
+	#define senzor_web_restart	"&sensor[marcel_reboot_prace]="
 	#define pin_red_led			15
 	#define pin_green_led		12
 	#define pin_blue_led		13
@@ -50,7 +52,7 @@
 #else
 	#define senzor_web_teplota	"&sensor[marcel_teplota_doma]="
 	#define senzor_web_vlhkost	"&sensor[marcel_vlhkost_doma]="
-	#define senzor_web_restart	"&sensor[marcel_restart]="
+	#define senzor_web_restart	"&sensor[marcel_reboot_doma]="
 #endif
 #define led_pin_mb	2
 
@@ -413,6 +415,32 @@ void wifi_init_sta(void)
     vEventGroupDelete(s_wifi_event_group);
 }
 
+void cas_to_led(void *pvParameters){
+	static const char *TAG = "cas to led";
+	time_t now;
+    struct tm timeinfo;
+    char strftime_buf[64];
+    time(&now);
+    localtime_r(&now, &timeinfo);
+    if (timeinfo.tm_year < (2016 - 1900)) {
+                obtain_time();
+    }
+    setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
+    tzset();
+    localtime_r(&now, &timeinfo);
+    if(timeinfo.tm_hour>6 && (timeinfo.tm_hour< 21)) led_day_set();
+    else led_night_set();
+    strftime(strftime_buf, sizeof(strftime_buf), "%H%M", &timeinfo);
+//    printf(strftime_buf);
+//    ESP_LOGI(TAG,strftime_buf);
+	led_print(0, strftime_buf);
+	if(timeinfo.tm_sec &1) {
+		led_dots(1);
+	}
+	else {
+		led_dots(0);
+	}
+}
 void app_main()
 {
 	uint16_t adc_data = 0;
@@ -422,7 +450,6 @@ void app_main()
 	adc_init(&adc_conf);
 	my_i2c_pcf8574_config();
 	lcd_init();
-//	hdc1080_read_temp();
 	lcd_str("START PROGRAMU");
 	gpio_set_direction(led_pin_mb, GPIO_MODE_OUTPUT);
 
@@ -446,7 +473,7 @@ void app_main()
 		adc_read(&adc_data);
 		float  i = ((float)adc_data/10);
 		printf("*******************jas pointer = %2.2f **************************\n",i);
-//		http_get_task(jas, &i);
+		http_get_task(jas, &i);
 		vTaskDelay(8000/portTICK_PERIOD_MS);
 #endif
 		tisk_vlhkost();
