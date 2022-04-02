@@ -17,8 +17,8 @@
 #define EXAMPLE_ESP_WIFI_PASS		"svereo1122"
 #define jas							3
 #else
-#define EXAMPLE_ESP_WIFI_SSID       "Hoass"
-#define EXAMPLE_ESP_WIFI_PASS		"Hoas12345"
+#define EXAMPLE_ESP_WIFI_SSID       "TeePee"
+#define EXAMPLE_ESP_WIFI_PASS		"07006400aa"
 #endif
 #define EXAMPLE_ESP_MAXIMUM_RETRY  	10
 

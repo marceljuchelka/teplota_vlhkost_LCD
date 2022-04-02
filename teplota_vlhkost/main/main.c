@@ -128,7 +128,7 @@ esp_err_t tisk_casu(){
      strftime(strftime_buf, sizeof(strftime_buf), "%d.%m.%Y %H:%M", &timeinfo);
      ESP_LOGI(TAG, "Datum a cas v CR je: %s", strftime_buf);
      printf(strftime_buf);
-     lcd_str_al(1, 0, strftime_buf, _left);
+//     lcd_str_al(1, 0, strftime_buf, _left);
 //     printf("V CR %d:%d  %d.%d.%d.",timeinfo.tm_hour,timeinfo.tm_min,timeinfo.tm_mday, timeinfo.tm_mon, timeinfo.tm_);
      ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
 
@@ -420,27 +420,27 @@ void app_main()
 	adc_conf.mode = ADC_READ_TOUT_MODE;
 	adc_conf.clk_div = 8;
 	adc_init(&adc_conf);
-	my_i2c_pcf8574_config();
-	lcd_init();
+//	my_i2c_pcf8574_config();
+//	lcd_init();
 //	hdc1080_read_temp();
-	lcd_str("START PROGRAMU");
+//	lcd_str("START PROGRAMU");
 	gpio_set_direction(led_pin_mb, GPIO_MODE_OUTPUT);
 
 	/* priprava wifi */
 	ESP_ERROR_CHECK(nvs_flash_init());
 	ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
 	wifi_init_sta();
-	lcd_cls();
-	tisk_restart(10.0);
+//	lcd_cls();
+//	tisk_restart(10.0);
 	vTaskDelay(2000/portTICK_PERIOD_MS);
 
 	while(1){
 //		sntp_example_task(0);
 
-		tisk_teplota();
+//		tisk_teplota();
 		tisk_casu();
-		lcd_led_on(2000);
-		tisk_restart(1.0);
+//		lcd_led_on(2000);
+//		tisk_restart(1.0);
 		vTaskDelay(8000/portTICK_PERIOD_MS);
 #if	witty == 1
 		adc_read(&adc_data);
@@ -449,10 +449,10 @@ void app_main()
 //		http_get_task(jas, &i);
 		vTaskDelay(8000/portTICK_PERIOD_MS);
 #endif
-		tisk_vlhkost();
+//		tisk_vlhkost();
 		tisk_casu();
-		lcd_led_on(2000);
-		tisk_restart(1.0);
+//		lcd_led_on(2000);
+//		tisk_restart(1.0);
 		vTaskDelay(8000/portTICK_PERIOD_MS);
 	}
 
