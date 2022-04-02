@@ -359,6 +359,8 @@ void wifi_init_sta(void)
 {
     s_wifi_event_group = xEventGroupCreate();
 
+
+
     tcpip_adapter_init();
 
     ESP_ERROR_CHECK(esp_event_loop_create_default());

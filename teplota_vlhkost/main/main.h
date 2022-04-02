@@ -13,8 +13,8 @@
 /* deklarace */
 #define witty  1
 #if witty == 1
-#define EXAMPLE_ESP_WIFI_SSID       "Svereo wifi"
-#define EXAMPLE_ESP_WIFI_PASS		"svereo1122"
+#define EXAMPLE_ESP_WIFI_SSID       "TeePee"
+#define EXAMPLE_ESP_WIFI_PASS		"07006400aa"
 #define jas							3
 #else
 #define EXAMPLE_ESP_WIFI_SSID       "Hoass"
