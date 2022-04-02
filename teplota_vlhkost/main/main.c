@@ -32,6 +32,7 @@
 //#include "../components/MJ_AM2320B/mj_am2320b.h"
 #include "../components/MJ_HDC1080/hdc1080.h"
 #include "../components/MK_LCD/mk_lcd44780.h"
+#include "../components/TM_1637_LED/tm_1637_led.h"
 #include "../main/main.h"
 #include "sdkconfig.h"
 
@@ -103,6 +104,38 @@ static void obtain_time(void)
         time(&now);
         localtime_r(&now, &timeinfo);
     }
+}
+
+void cas_to_led(void *pvParameters) {
+
+	static const char *TAG = "cas to led";
+	time_t now;
+	struct tm timeinfo;
+	char strftime_buf[64];
+//	while (1) {
+	time(&now);
+	localtime_r(&now, &timeinfo);
+	if (timeinfo.tm_year < (2016 - 1900)) {
+		obtain_time();
+	}
+	setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
+	tzset();
+	localtime_r(&now, &timeinfo);
+	if (timeinfo.tm_hour > 5 && (timeinfo.tm_hour < 21))
+		led_day_set();
+	else
+		led_night_set();
+	strftime(strftime_buf, sizeof(strftime_buf), "%H%M", &timeinfo);
+//    printf(strftime_buf);
+	ESP_LOGI(TAG, strftime_buf);
+	led_print(0, strftime_buf);
+	if (timeinfo.tm_sec & 1) {
+		led_dots(1);
+	} else {
+		led_dots(0);
+	}
+//		vTaskDelay(1000 / portTICK_PERIOD_MS);
+//	}
 }
 
 esp_err_t tisk_casu(){
@@ -432,16 +465,19 @@ void app_main()
 	wifi_init_sta();
 //	lcd_cls();
 //	tisk_restart(10.0);
+	tm_1637_gpio_init();
 	vTaskDelay(2000/portTICK_PERIOD_MS);
 
 	while(1){
 //		sntp_example_task(0);
 
 //		tisk_teplota();
-		tisk_casu();
+//		tisk_casu();
+//		xTaskCreate(cas_to_led, "CasToLed", 4096, NULL, 1, NULL);
+		cas_to_led(0);
 //		lcd_led_on(2000);
 //		tisk_restart(1.0);
-		vTaskDelay(8000/portTICK_PERIOD_MS);
+		vTaskDelay(1000/portTICK_PERIOD_MS);
 #if	witty == 1
 		adc_read(&adc_data);
 		float  i = ((float)adc_data/10);
@@ -450,10 +486,10 @@ void app_main()
 		vTaskDelay(8000/portTICK_PERIOD_MS);
 #endif
 //		tisk_vlhkost();
-		tisk_casu();
+//		tisk_casu();
 //		lcd_led_on(2000);
 //		tisk_restart(1.0);
-		vTaskDelay(8000/portTICK_PERIOD_MS);
+//		vTaskDelay(8000/portTICK_PERIOD_MS);
 	}
 
 
