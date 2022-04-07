@@ -18,6 +18,7 @@
 #include "esp_event.h"
 #include "esp_wifi.h"
 #include "esp_sntp.h"
+#include "time.h"
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "driver/adc.h"
