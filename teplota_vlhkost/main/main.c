@@ -121,7 +121,7 @@ void cas_to_led(void *pvParameters) {
 	setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
 	tzset();
 	localtime_r(&now, &timeinfo);
-	if (timeinfo.tm_hour > 5 && (timeinfo.tm_hour < 21))
+	if (timeinfo.tm_hour > 4 && (timeinfo.tm_hour < 20))
 		led_day_set();
 	else
 		led_night_set();
