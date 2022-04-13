@@ -458,6 +458,7 @@ void app_main()
 //	hdc1080_read_temp();
 //	lcd_str("START PROGRAMU");
 	gpio_set_direction(led_pin_mb, GPIO_MODE_OUTPUT);
+	gpio_set_level(led_pin_mb, 1);
 
 	/* priprava wifi */
 	ESP_ERROR_CHECK(nvs_flash_init());
