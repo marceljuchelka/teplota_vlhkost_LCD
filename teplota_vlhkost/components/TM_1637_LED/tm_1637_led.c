@@ -82,7 +82,7 @@ void tm_1637_gpio_init() {
 	gpio_config_t conf;
 	conf.pin_bit_mask = (1 << TM_1637_CLK) | (1 << TM_1637_DIO);
 	conf.pull_up_en = 1;
-	conf.mode = GPIO_MODE_INPUT;
+	conf.mode = GPIO_MODE_OUTPUT;
 	gpio_config(&conf);
 }
 

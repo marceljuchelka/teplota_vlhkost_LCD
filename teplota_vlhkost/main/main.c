@@ -37,21 +37,24 @@
 #include "sdkconfig.h"
 
 
-
+#include "esp_spi_flash.h"
 
 
 #if witty == 1
-	#define senzor_web_teplota	"&sensor[marcel_teplota_prace]="
-	#define senzor_web_vlhkost	"&sensor[marcel_vlhkost_prace]="
-	#define senzor_web_jas		"&sensor[marcel_jas_prace]="
-	#define pin_red_led			15
-	#define pin_green_led		12
-	#define pin_blue_led		13
+#define senzor_web_teplota	"&sensor[marcel_teplota_prace]="
+#define senzor_web_vlhkost	"&sensor[marcel_vlhkost_prace]="
+#define senzor_web_jas		"&sensor[marcel_jas_prace]="
+#define senzor_web_ozon		"&sensor[marcel_ozon_prace]="
+#define senzor_web_restart	"&sensor[marcel_restart]="
+#define pin_red_led			15
+#define pin_green_led		12
+#define pin_blue_led		13
 
 #else
-	#define senzor_web_teplota	"&sensor[marcel_teplota_doma]="
-	#define senzor_web_vlhkost	"&sensor[marcel_vlhkost_doma]="
-	#define senzor_web_restart	"&sensor[marcel_restart]="
+#define senzor_web_teplota	"&sensor[marcel_teplota_doma]="
+#define senzor_web_vlhkost	"&sensor[marcel_vlhkost_doma]="
+#define senzor_web_ozon		"&sensor[marcel_ozon_doma]="
+#define senzor_web_restart	"&sensor[marcel_restart]="
 #endif
 #define led_pin_mb	2
 
@@ -112,30 +115,31 @@ void cas_to_led(void *pvParameters) {
 	time_t now;
 	struct tm timeinfo;
 	char strftime_buf[64];
-//	while (1) {
-	time(&now);
-	localtime_r(&now, &timeinfo);
-	if (timeinfo.tm_year < (2016 - 1900)) {
-		obtain_time();
-	}
-	setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
-	tzset();
-	localtime_r(&now, &timeinfo);
-	if (timeinfo.tm_hour > 4 && (timeinfo.tm_hour < 20))
-		led_day_set();
-	else
-		led_night_set();
-	strftime(strftime_buf, sizeof(strftime_buf), "%H%M", &timeinfo);
+	while (1) {
+		time(&now);
+		localtime_r(&now, &timeinfo);
+		if (timeinfo.tm_year < (2016 - 1900)) {
+			obtain_time();
+		}
+		setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
+		tzset();
+		localtime_r(&now, &timeinfo);
+		if (timeinfo.tm_hour > 4 && (timeinfo.tm_hour < 20))
+			led_day_set();
+		else
+			led_night_set();
+
+		strftime(strftime_buf, sizeof(strftime_buf), "%H%M", &timeinfo);
 //    printf(strftime_buf);
-	ESP_LOGI(TAG, strftime_buf);
-	led_print(0, strftime_buf);
-	if (timeinfo.tm_sec & 1) {
-		led_dots(1);
-	} else {
-		led_dots(0);
-	}
+		ESP_LOGI(TAG, strftime_buf);
+		led_print(0, strftime_buf);
+		if (timeinfo.tm_sec & 1) {
+			led_dots(1);
+		} else {
+			led_dots(0);
+		}
 //		vTaskDelay(1000 / portTICK_PERIOD_MS);
-//	}
+	}
 }
 
 esp_err_t tisk_casu(){
@@ -214,6 +218,7 @@ static void http_get_task(uint8_t velicina,float* hodnota)
 
 	if(velicina == teplota_wifi) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_teplota,*hodnota);
 	if(velicina == vlhkost_wifi) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_vlhkost,*hodnota);
+	if(velicina == ozon_wifi) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_ozon,*hodnota);
 	if(velicina == restart_wifi) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_restart,*hodnota);
 //	if(velicina == jas) sprintf(buf,"%s%s%2.1f",WEB_URL,senzor_web_jas,*hodnota);
 //	printf("buf = %s\n",buf);
@@ -309,7 +314,7 @@ static void http_get_task(uint8_t velicina,float* hodnota)
 static void event_handler(void* arg, esp_event_base_t event_base,
                                 int32_t event_id, void* event_data)
 {
-    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {					//je li wifi nastartovana
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
@@ -388,9 +393,9 @@ void lcd_led_on(uint16_t cas){
 }
 void wifi_init_sta(void)
 {
-    s_wifi_event_group = xEventGroupCreate();
+    s_wifi_event_group = xEventGroupCreate();		//utvor eventgroup
 
-    tcpip_adapter_init();
+    tcpip_adapter_init();							//inicializuje TCPIP
 
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
@@ -474,8 +479,8 @@ void app_main()
 
 //		tisk_teplota();
 //		tisk_casu();
-//		xTaskCreate(cas_to_led, "CasToLed", 4096, NULL, 1, NULL);
-		cas_to_led(0);
+		xTaskCreate(cas_to_led, "CasToLed", 4096, NULL, 1, NULL);
+//		cas_to_led(0);
 //		lcd_led_on(2000);
 //		tisk_restart(1.0);
 		vTaskDelay(1000/portTICK_PERIOD_MS);
