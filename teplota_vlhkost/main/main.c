@@ -233,101 +233,81 @@ static void http_get_task(uint8_t velicina,float* hodnota)
     char recv_buf[64];
 
 //    while(0) {
-        int err = getaddrinfo(WEB_SERVER, "80", &hints, &res);
-        if(err != 0 || res == NULL) {
-            ESP_LOGE(TAG, "DNS lookup failed err=%d res=%p", err, res);
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
+	int err = getaddrinfo(WEB_SERVER, "80", &hints, &res);
+	if(err != 0 || res == NULL) {
+		ESP_LOGE(TAG, "DNS lookup failed err=%d res=%p", err, res);
+		vTaskDelay(1000 / portTICK_PERIOD_MS);
 //            continue;
-        }
+	}
 
-        /* Code to print the resolved IP.
+	/* Code to print the resolved IP.
 
-           Note: inet_ntoa is non-reentrant, look at ipaddr_ntoa_r for "real" code */
-        addr = &((struct sockaddr_in *)res->ai_addr)->sin_addr;
-        ESP_LOGI(TAG1, "DNS lookup succeeded. IP=%s", inet_ntoa(*addr));
+	   Note: inet_ntoa is non-reentrant, look at ipaddr_ntoa_r for "real" code */
+	addr = &((struct sockaddr_in *)res->ai_addr)->sin_addr;
+	ESP_LOGI(TAG1, "DNS lookup succeeded. IP=%s", inet_ntoa(*addr));
 
-        s = socket(res->ai_family, res->ai_socktype, 0);
-        if(s < 0) {
-            ESP_LOGE(TAG1, "... Failed to allocate socket.");
-            freeaddrinfo(res);
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
+	s = socket(res->ai_family, res->ai_socktype, 0);
+	if(s < 0) {
+		ESP_LOGE(TAG1, "... Failed to allocate socket.");
+		freeaddrinfo(res);
+		vTaskDelay(1000 / portTICK_PERIOD_MS);
 //            continue;
-        }
-        ESP_LOGI(TAG1, "... allocated socket");
+	}
+	ESP_LOGI(TAG1, "... allocated socket");
 
-        if(connect(s, res->ai_addr, res->ai_addrlen) != 0) {
-            ESP_LOGE(TAG1, "... socket connect failed errno=%d", errno);
-            close(s);
-            freeaddrinfo(res);
-            vTaskDelay(4000 / portTICK_PERIOD_MS);
+	if(connect(s, res->ai_addr, res->ai_addrlen) != 0) {
+		ESP_LOGE(TAG1, "... socket connect failed errno=%d", errno);
+		close(s);
+		freeaddrinfo(res);
+		vTaskDelay(4000 / portTICK_PERIOD_MS);
 //            continue;
-        }
+	}
 
-        ESP_LOGI(TAG1, "... connected");
-        freeaddrinfo(res);
+	ESP_LOGI(TAG1, "... connected");
+	freeaddrinfo(res);
 
-        if (write(s, REQUEST, strlen(REQUEST)) < 0) {
-            ESP_LOGE(TAG1, "... socket send failed");
-            close(s);
-            vTaskDelay(4000 / portTICK_PERIOD_MS);
+	if (write(s, REQUEST, strlen(REQUEST)) < 0) {
+		ESP_LOGE(TAG1, "... socket send failed");
+		close(s);
+		vTaskDelay(4000 / portTICK_PERIOD_MS);
 //            continue;
-        }
-        ESP_LOGI(TAG1, "... socket send success");
+	}
+	ESP_LOGI(TAG1, "... socket send success");
+	printf("odeslano %s\n", request);
 
-        struct timeval receiving_timeout;
-        receiving_timeout.tv_sec = 5;
-        receiving_timeout.tv_usec = 0;
-        if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &receiving_timeout,
-                sizeof(receiving_timeout)) < 0) {
-            ESP_LOGE(TAG1, "... failed to set socket receiving timeout");
-            close(s);
-            vTaskDelay(4000 / portTICK_PERIOD_MS);
+	struct timeval receiving_timeout;
+	receiving_timeout.tv_sec = 5;
+	receiving_timeout.tv_usec = 0;
+	if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &receiving_timeout,
+			sizeof(receiving_timeout)) < 0) {
+		ESP_LOGE(TAG1, "... failed to set socket receiving timeout");
+		close(s);
+		vTaskDelay(4000 / portTICK_PERIOD_MS);
 //            continue;
-        }
-        ESP_LOGI(TAG1, "... set socket receiving timeout success");
-        close(s);
+	}
+	ESP_LOGI(TAG1, "... set socket receiving timeout success");
+	close(s);
 
-        /* Read HTTP response */
-//        do {
-//            bzero(recv_buf, sizeof(recv_buf));
-//            r = read(s, recv_buf, sizeof(recv_buf)-1);
-//            for(int i = 0; i < r; i++) {
-////                putchar(recv_buf[i]);
-//            }
-//        } while(r > 0);
-//
-//        ESP_LOGI(TAG1, "... done reading from socket. Last read return=%d errno=%d\r\n", r, errno);
-//        close(s);
-//        for(int countdown = 1; countdown >= 0; countdown--) {
-//            ESP_LOGI(TAG1, "%d... ", countdown);
-//            vTaskDelay(1000 / portTICK_PERIOD_MS);
-//        }
-//        ESP_LOGI(TAG1, "Starting again!");
-//    }
+	/* Read HTTP response */
+	do {
+		bzero(recv_buf, sizeof(recv_buf));
+		r = read(s, recv_buf, sizeof(recv_buf)-1);
+		for(int i = 0; i < r; i++) {
+			putchar(recv_buf[i]);
+		}
+	} while(r > 0);
+
+	ESP_LOGI(TAG1, "... done reading from socket. Last read return=%d errno=%d\r\n", r, errno);
+	close(s);
+	for(int countdown = 1; countdown >= 0; countdown--) {
+		ESP_LOGI(TAG1, "%d... ", countdown);
+		vTaskDelay(1000 / portTICK_PERIOD_MS);
+	}
+	ESP_LOGI(TAG1, "end");
+
 }
 
-static void event_handler(void* arg, esp_event_base_t event_base,
-                                int32_t event_id, void* event_data)
-{
-    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-        esp_wifi_connect();
-    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
-            esp_wifi_connect();
-            s_retry_num++;
-            ESP_LOGI(TAG, "retry to connect to the AP");
-        } else {
-            xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
-        }
-        ESP_LOGI(TAG,"connect to the AP fail");
-    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-        ESP_LOGI(TAG, "got ip:%s",
-                 ip4addr_ntoa(&event->ip_info.ip));
-        s_retry_num = 0;
-        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
-    }
-}
+
 
 
 uint16_t test_num(uint8_t byte_hi, uint8_t byte_lo){
@@ -386,6 +366,30 @@ void lcd_led_on(uint16_t cas){
 	vTaskDelay(cas/portTICK_PERIOD_MS);
 	lcd_LED(0);
 }
+
+static void event_handler(void* arg, esp_event_base_t event_base,
+                                int32_t event_id, void* event_data)
+{
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+        esp_wifi_connect();
+    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
+            esp_wifi_connect();
+            s_retry_num++;
+            ESP_LOGI(TAG, "retry to connect to the AP");
+        } else {
+            xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
+        }
+        ESP_LOGI(TAG,"connect to the AP fail");
+    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+        ESP_LOGI(TAG, "got ip:%s",
+                 ip4addr_ntoa(&event->ip_info.ip));
+        s_retry_num = 0;
+        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+    }
+}
+
 void wifi_init_sta(void)
 {
     s_wifi_event_group = xEventGroupCreate();
@@ -453,8 +457,8 @@ void app_main()
 	adc_conf.mode = ADC_READ_TOUT_MODE;
 	adc_conf.clk_div = 8;
 	adc_init(&adc_conf);
-//	my_i2c_pcf8574_config();
-//	lcd_init();
+	my_i2c_pcf8574_config();
+	lcd_init();
 //	hdc1080_read_temp();
 //	lcd_str("START PROGRAMU");
 	gpio_set_direction(led_pin_mb, GPIO_MODE_OUTPUT);
@@ -464,7 +468,7 @@ void app_main()
 	ESP_ERROR_CHECK(nvs_flash_init());
 	ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
 	wifi_init_sta();
-//	lcd_cls();
+	lcd_cls();
 //	tisk_restart(10.0);
 	tm_1637_gpio_init();
 	vTaskDelay(2000/portTICK_PERIOD_MS);
@@ -472,8 +476,8 @@ void app_main()
 	while(1){
 //		sntp_example_task(0);
 
-//		tisk_teplota();
-//		tisk_casu();
+		tisk_teplota();
+		tisk_casu();
 //		xTaskCreate(cas_to_led, "CasToLed", 4096, NULL, 1, NULL);
 		cas_to_led(0);
 //		lcd_led_on(2000);
